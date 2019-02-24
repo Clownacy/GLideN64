@@ -28,6 +28,9 @@ void DisplayWindow::stop()
 
 void DisplayWindow::restart()
 {
+	//setWindowSize(config.video.windowedWidth, config.video.windowedHeight);
+	m_resizeWidth = config.video.windowedWidth;
+	m_resizeHeight = config.video.windowedHeight;
 	m_bResizeWindow = true;
 }
 

@@ -14,7 +14,6 @@
 #include "ui_configDialog.h"
 #include "Settings.h"
 #include "ConfigDialog.h"
-#include "FullscreenResolutions.h"
 
 static
 struct
@@ -103,13 +102,7 @@ void ConfigDialog::_init()
 	ui->overscanPalTopSpinBox->setValue(config.frameBufferEmulation.overscanPAL.top);
 	ui->overscanPalBottomSpinBox->setValue(config.frameBufferEmulation.overscanPAL.bottom);
 
-	QStringList fullscreenModesList, fullscreenRatesList;
-	int fullscreenMode, fullscreenRate;
-	fillFullscreenResolutionsList(fullscreenModesList, fullscreenMode, fullscreenRatesList, fullscreenRate);
-	ui->fullScreenResolutionComboBox->clear();
-	ui->fullScreenResolutionComboBox->insertItems(0, fullscreenModesList);
-	ui->fullScreenResolutionComboBox->setCurrentIndex(fullscreenMode);
-	ui->fullScreenRefreshRateComboBox->setCurrentIndex(fullscreenRate);
+	ui->fullScreenCheckBox->setChecked(config.video.fullscreen != 0);
 
 	ui->fxaaCheckBox->toggle();
 	ui->fxaaCheckBox->setChecked(config.video.fxaa != 0);
@@ -397,8 +390,7 @@ void ConfigDialog::accept()
 		config.video.windowedHeight = windowedResolutionDimensions[1].trimmed().toInt();
 	}
 
-	getFullscreenResolutions(ui->fullScreenResolutionComboBox->currentIndex(), config.video.fullscreenWidth, config.video.fullscreenHeight);
-	getFullscreenRefreshRate(ui->fullScreenRefreshRateComboBox->currentIndex(), config.video.fullscreenRefresh);
+	config.video.fullscreen = ui->fullScreenCheckBox->isChecked() ? 1 : 0;
 
 	config.video.fxaa = ui->fxaaCheckBox->isChecked() ? 1 : 0;
 	config.video.multisampling = (ui->fxaaCheckBox->isChecked() || ui->n64DepthCompareCheckBox->isChecked()) ? 0 : pow2(ui->aliasingSlider->value());
@@ -613,16 +605,6 @@ void ConfigDialog::on_buttonBox_clicked(QAbstractButton *button)
 			setRomName(m_romName);
 		}
 	}
-}
-
-void ConfigDialog::on_fullScreenResolutionComboBox_currentIndexChanged(int index)
-{
-	QStringList fullscreenRatesList;
-	int fullscreenRate;
-	fillFullscreenRefreshRateList(index, fullscreenRatesList, fullscreenRate);
-	ui->fullScreenRefreshRateComboBox->clear();
-	ui->fullScreenRefreshRateComboBox->insertItems(0, fullscreenRatesList);
-	ui->fullScreenRefreshRateComboBox->setCurrentIndex(fullscreenRate);
 }
 
 void ConfigDialog::on_texPackPathButton_clicked()
