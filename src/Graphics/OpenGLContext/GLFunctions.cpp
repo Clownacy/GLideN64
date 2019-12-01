@@ -31,7 +31,7 @@ typedef struct __GLXFBConfigRec *GLXFBConfig;
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glxext.h>
 #define glGetProcAddress glXGetProcAddress
-#define GL_GET_PROC_ADR(proc_type, proc_name) ptr##proc_name = (proc_type) glGetProcAddress((const GLubyte*)#proc_name)
+#define GL_GET_PROC_ADR(proc_type, proc_name) ptr##proc_name = (proc_type) glGetProcAddress((const GLubyte*)"gl"#proc_name)
 
 #elif defined(OS_MAC_OS_X)
 #include <dlfcn.h>
@@ -45,7 +45,7 @@ static void* AppleGLGetProcAddress (const char *name)
 	return (image ? dlsym(image, name) : NULL);
 }
 #define glGetProcAddress AppleGLGetProcAddress
-#define GL_GET_PROC_ADR(proc_type, proc_name) ptr##proc_name = (proc_type) glGetProcAddress(#proc_name)
+#define GL_GET_PROC_ADR(proc_type, proc_name) ptr##proc_name = (proc_type) glGetProcAddress("gl"#proc_name)
 
 #elif defined(OS_IOS)
 #include <dlfcn.h>
@@ -56,11 +56,11 @@ static void* IOSGLGetProcAddress (const char *name)
 }
 
 #define glGetProcAddress IOSGLGetProcAddress
-#define GL_GET_PROC_ADR(proc_type, proc_name) ptr##proc_name = (proc_type)glGetProcAddress(#proc_name)
+#define GL_GET_PROC_ADR(proc_type, proc_name) ptr##proc_name = (proc_type)glGetProcAddress("gl"#proc_name)
 
 #endif
 
-//GL Fucntions
+//GL Functions
 PFNGLBLENDFUNCPROC ptrBlendFunc;
 PFNGLPIXELSTOREIPROC ptrPixelStorei;
 PFNGLCLEARCOLORPROC ptrClearColor;
@@ -194,7 +194,11 @@ PFNGLTEXTUREBARRIERNVPROC ptrTextureBarrierNV;
 PFNGLCLEARBUFFERFVPROC ptrClearBufferfv;
 PFNGLENABLEIPROC ptrEnablei;
 PFNGLDISABLEIPROC ptrDisablei;
+PFNGLDEBUGMESSAGECALLBACKPROC ptrDebugMessageCallback;
+PFNGLDEBUGMESSAGECONTROLPROC ptrDebugMessageControl;
+PFNGLCOPYTEXIMAGE2DPROC ptrCopyTexImage2D;
 PFNGLEGLIMAGETARGETTEXTURE2DOESPROC ptrEGLImageTargetTexture2DOES;
+PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC ptrEGLImageTargetRenderbufferStorageOES;
 
 void initGLFunctions()
 {
@@ -378,5 +382,10 @@ void initGLFunctions()
 	GL_GET_PROC_ADR(PFNGLCLEARBUFFERFVPROC, ClearBufferfv);
 	GL_GET_PROC_ADR(PFNGLENABLEIPROC, Enablei);
 	GL_GET_PROC_ADR(PFNGLDISABLEIPROC, Disablei);
+	GL_GET_PROC_ADR(PFNGLDEBUGMESSAGECALLBACKPROC, DebugMessageCallback);
+	GL_GET_PROC_ADR(PFNGLDEBUGMESSAGECONTROLPROC, DebugMessageControl);
+	GL_GET_PROC_ADR(PFNGLCOPYTEXIMAGE2DPROC, CopyTexImage2D);
+
 	GL_GET_PROC_ADR(PFNGLEGLIMAGETARGETTEXTURE2DOESPROC, EGLImageTargetTexture2DOES);
+	GL_GET_PROC_ADR(PFNGLEGLIMAGETARGETRENDERBUFFERSTORAGEOESPROC, EGLImageTargetRenderbufferStorageOES);
 }

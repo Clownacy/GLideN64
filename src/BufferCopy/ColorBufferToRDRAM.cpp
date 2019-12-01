@@ -65,7 +65,7 @@ void ColorBufferToRDRAM::_initFBTexture(void)
 {
 	const FramebufferTextureFormats & fbTexFormat = gfxContext.getFramebufferTextureFormats();
 
-	m_pTexture = textureCache().addFrameBufferTexture(false);
+	m_pTexture = textureCache().addFrameBufferTexture(Context::EglImage ? textureTarget::TEXTURE_EXTERNAL : textureTarget::TEXTURE_2D);
 	m_pTexture->format = G_IM_FMT_RGBA;
 	m_pTexture->size = 2;
 	m_pTexture->clampS = 1;
@@ -81,9 +81,15 @@ void ColorBufferToRDRAM::_initFBTexture(void)
 	m_pTexture->height = VI_GetMaxBufferHeight(m_lastBufferWidth);
 	m_pTexture->textureBytes = m_pTexture->width * m_pTexture->height * fbTexFormat.colorFormatBytes;
 
+
+	m_bufferReader.reset(gfxContext.createColorBufferReader(m_pTexture));
+
+	// Skip this since texture is initialized in the EGL color buffer reader
+	if (!Context::EglImage)
 	{
 		Context::InitTextureParams params;
 		params.handle = m_pTexture->name;
+		params.target = textureTarget::TEXTURE_2D;
 		params.width = m_pTexture->width;
 		params.height = m_pTexture->height;
 		params.internalFormat = fbTexFormat.colorInternalFormat;
@@ -91,10 +97,11 @@ void ColorBufferToRDRAM::_initFBTexture(void)
 		params.dataType = fbTexFormat.colorType;
 		gfxContext.init2DTexture(params);
 	}
+
 	{
 		Context::TexParameters params;
 		params.handle = m_pTexture->name;
-		params.target = textureTarget::TEXTURE_2D;
+		params.target = Context::EglImage ? textureTarget::TEXTURE_EXTERNAL : textureTarget::TEXTURE_2D;
 		params.textureUnitIndex = textureIndices::Tex[0];
 		params.minFilter = textureParameters::FILTER_LINEAR;
 		params.magFilter = textureParameters::FILTER_LINEAR;
@@ -105,7 +112,7 @@ void ColorBufferToRDRAM::_initFBTexture(void)
 		bufTarget.bufferHandle = ObjectHandle(m_FBO);
 		bufTarget.bufferTarget = bufferTarget::DRAW_FRAMEBUFFER;
 		bufTarget.attachment = bufferAttachment::COLOR_ATTACHMENT0;
-		bufTarget.textureTarget = textureTarget::TEXTURE_2D;
+		bufTarget.textureTarget = Context::EglImageFramebuffer ? textureTarget::TEXTURE_EXTERNAL : textureTarget::TEXTURE_2D;
 		bufTarget.textureHandle = m_pTexture->name;
 		gfxContext.addFrameBufferRenderTarget(bufTarget);
 	}
@@ -114,8 +121,6 @@ void ColorBufferToRDRAM::_initFBTexture(void)
 	assert(!gfxContext.isFramebufferError());
 
 	gfxContext.bindFramebuffer(graphics::bufferTarget::DRAW_FRAMEBUFFER, graphics::ObjectHandle::defaultFramebuffer);
-
-	m_bufferReader.reset(gfxContext.createColorBufferReader(m_pTexture));
 }
 
 void ColorBufferToRDRAM::_destroyFBTexure(void)

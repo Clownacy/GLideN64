@@ -25,7 +25,7 @@ void Config::resetToDefaults()
 	video.fxaa = 0;
 	video.multisampling = 0;
 	video.verticalSync = 0;
-	video.threadedVideo = 0;
+	video.threadedVideo = 1;
 
 	texture.maxAnisotropy = 0;
 	texture.bilinearMode = BILINEAR_STANDARD;
@@ -50,7 +50,7 @@ void Config::resetToDefaults()
 #endif
 
 	graphics2D.correctTexrectCoords = tcDisable;
-	graphics2D.enableNativeResTexrects = 0;
+	graphics2D.enableNativeResTexrects = NativeResTexrectsMode::ntDisable;
 	graphics2D.bgMode = BGMode::bgStripped;
 
 	frameBufferEmulation.enable = 1;
@@ -65,6 +65,7 @@ void Config::resetToDefaults()
 	frameBufferEmulation.nativeResFactor = 0;
 	frameBufferEmulation.fbInfoReadColorChunk = 0;
 	frameBufferEmulation.fbInfoReadDepthChunk = 1;
+	frameBufferEmulation.copyDepthToMainDepthBuffer = 0;
 #ifndef MUPENPLUSAPI
 	frameBufferEmulation.fbInfoDisabled = 0;
 #else
@@ -86,6 +87,9 @@ void Config::resetToDefaults()
 	textureFilter.txForce16bpp = 0;
 	textureFilter.txCacheCompression = 1;
 	textureFilter.txSaveCache = 1;
+
+	textureFilter.txEnhancedTextureFileStorage = 0;
+	textureFilter.txHiresTextureFileStorage = 0;
 
 	api().GetUserDataPath(textureFilter.txPath);
 	gln_wcscat(textureFilter.txPath, wst("/hires_texture"));

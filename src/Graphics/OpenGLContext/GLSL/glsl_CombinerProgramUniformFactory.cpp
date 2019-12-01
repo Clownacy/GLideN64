@@ -926,19 +926,22 @@ public:
 		std::array<f32, 2> aTexMirror[2] = { { 0.0f, 0.0f}, { 0.0f, 0.0f } };
 		std::array<f32, 2> aTexScale[2] = { { 1.0f, 1.0f },{ 1.0f, 1.0f } };
 		TextureCache & cache = textureCache();
+		const bool replaceTex1ByTex0 = needReplaceTex1ByTex0();
 		for (u32 t = 0; t < 2; ++t) {
 			if (!m_useTile[t])
 				continue;
 
-			const gDPTile * pTile = gSP.textureTile[t];
-			CachedTexture * pTexture = cache.current[t];
+			const u32 tile = replaceTex1ByTex0 ? 0 : t;
+			const gDPTile * pTile = gSP.textureTile[tile];
+			CachedTexture * pTexture = cache.current[tile];
 			if (pTile == nullptr || pTexture == nullptr)
 				continue;
 
 			if (gDP.otherMode.cycleType != G_CYC_COPY) {
 				if (pTexture->clampS) {
 					aTexClamp[t][0] = 0.0f; // S lower bound
-					if (pTexture->frameBufferTexture != CachedTexture::fbNone)
+					if (pTexture->frameBufferTexture != CachedTexture::fbNone ||
+						pTile->textureMode == TEXTUREMODE_BGIMAGE)
 						aTexClamp[t][2] = 1.0f;
 					else {
 						u32 tileWidth = ((pTile->lrs - pTile->uls) & 0x03FF) + 1;
@@ -950,7 +953,8 @@ public:
 				}
 				if (pTexture->clampT) {
 					aTexClamp[t][1] = 0.0f; // T lower bound
-					if (pTexture->frameBufferTexture != CachedTexture::fbNone)
+					if (pTexture->frameBufferTexture != CachedTexture::fbNone ||
+						pTile->textureMode == TEXTUREMODE_BGIMAGE)
 						aTexClamp[t][3] = 1.0f;
 					else {
 						const u32 tileHeight = ((pTile->lrt - pTile->ult) & 0x03FF) + 1;

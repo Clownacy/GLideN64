@@ -13,10 +13,22 @@
 
 using namespace opengl;
 
+static
+void APIENTRY on_gl_error(GLenum source,
+						GLenum type,
+						GLuint id,
+						GLenum severity,
+						GLsizei length,
+						const char* message,
+						const void *userParam)
+{
+	LOG(LOG_ERROR, "%s", message);
+}
+
 void GLInfo::init() {
-	const char * strVersion = reinterpret_cast<const char *>(glGetString(GL_VERSION));
-	isGLESX = strstr(strVersion, "OpenGL ES") != nullptr;
-	isGLES2 = strstr(strVersion, "OpenGL ES 2") != nullptr;
+	const char * strDriverVersion = reinterpret_cast<const char *>(glGetString(GL_VERSION));
+	isGLESX = strstr(strDriverVersion, "OpenGL ES") != nullptr;
+	isGLES2 = strstr(strDriverVersion, "OpenGL ES 2") != nullptr;
 	if (isGLES2) {
 		majorVersion = 2;
 		minorVersion = 0;
@@ -29,23 +41,22 @@ void GLInfo::init() {
 
 
 	LOG(LOG_VERBOSE, "OpenGL vendor: %s", glGetString(GL_VENDOR));
-	const GLubyte * strRenderer = glGetString(GL_RENDERER);
-	const GLubyte * strDriverVersion = glGetString(GL_VERSION);
+	const char * strRenderer = reinterpret_cast<const char *>(glGetString(GL_RENDERER));
 
-	if (std::regex_match(std::string((const char*)strRenderer), std::regex("Adreno.*530")))
+	if (std::regex_match(std::string(strRenderer), std::regex("Adreno.*530")))
 		renderer = Renderer::Adreno530;
-	else if (std::regex_match(std::string((const char*)strRenderer), std::regex("Adreno.*540")) ||
-		std::regex_match(std::string((const char*)strRenderer), std::regex("Adreno.*6\\d\\d")))
+	else if (std::regex_match(std::string(strRenderer), std::regex("Adreno.*540")) ||
+		std::regex_match(std::string(strRenderer), std::regex("Adreno.*6\\d\\d")))
 		renderer = Renderer::Adreno_no_bugs;
-	else if (strstr((const char*)strRenderer, "Adreno") != nullptr)
+	else if (strstr(strRenderer, "Adreno") != nullptr)
 		renderer = Renderer::Adreno;
-	else if (strstr((const char*)strRenderer, "VideoCore IV") != nullptr)
+	else if (strstr(strRenderer, "VideoCore IV") != nullptr)
 		renderer = Renderer::VideoCore;
-	else if (strstr((const char*)strRenderer, "Intel") != nullptr)
+	else if (strstr(strRenderer, "Intel") != nullptr)
 		renderer = Renderer::Intel;
-	else if (strstr((const char*)strRenderer, "PowerVR") != nullptr)
+	else if (strstr(strRenderer, "PowerVR") != nullptr)
 		renderer = Renderer::PowerVR;
-	else if (strstr((const char*)strRenderer, "NVIDIA Tegra") != nullptr)
+	else if (strstr(strRenderer, "NVIDIA Tegra") != nullptr)
 		renderer = Renderer::Tegra;
 	LOG(LOG_VERBOSE, "OpenGL renderer: %s", strRenderer);
 
@@ -65,7 +76,7 @@ void GLInfo::init() {
 	bool hasBuggyFragmentShaderInterlock = false;
 
 	if (renderer == Renderer::Tegra) {
-		std::string strDriverVersionString((const char*)strDriverVersion);
+		std::string strDriverVersionString(strDriverVersion);
 		std::string nvidiaText = "NVIDIA";
 		std::size_t versionPosition = strDriverVersionString.find(nvidiaText);
 
@@ -153,10 +164,26 @@ void GLInfo::init() {
 		    (renderer != Renderer::PowerVR);
 #endif
 
+	eglImageFramebuffer = eglImage && !isGLES2;
+
 	if (config.frameBufferEmulation.N64DepthCompare != 0) {
 		if (!imageTextures && !ext_fetch) {
 			config.frameBufferEmulation.N64DepthCompare = 0;
 			LOG(LOG_WARNING, "Your GPU does not support the extensions needed for N64 Depth Compare.");
 		}
 	}
+
+#ifdef EGL
+	if (isGLESX)
+	{
+		ptrDebugMessageCallback = (PFNGLDEBUGMESSAGECALLBACKPROC) eglGetProcAddress("glDebugMessageCallbackKHR");
+		ptrDebugMessageControl = (PFNGLDEBUGMESSAGECONTROLPROC) eglGetProcAddress("glDebugMessageControlKHR");
+	}
+#endif
+
+#ifdef GL_DEBUG
+	glDebugMessageCallback(on_gl_error, nullptr);
+	glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, NULL, GL_TRUE);
+	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+#endif
 }

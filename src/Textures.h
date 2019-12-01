@@ -53,7 +53,7 @@ struct TextureCache
 
 	void init();
 	void destroy();
-	CachedTexture * addFrameBufferTexture(bool _multisample);
+	CachedTexture * addFrameBufferTexture(graphics::Parameter _target);
 	void removeFrameBufferTexture(CachedTexture * _pTexture);
 	void activateTexture(u32 _t, CachedTexture *_pTexture);
 	void activateDummy(u32 _t);
@@ -109,8 +109,8 @@ private:
 
 void getTextureShiftScale(u32 tile, const TextureCache & cache, f32 & shiftScaleS, f32 & shiftScaleT);
 
-using MirrorClamp = std::array<f32, 4>;
-void getMirrorClamp(u32 _tile, const CachedTexture * _pTexture, MirrorClamp& aMirrorClamp);
+// Check for situation when Tex0 is used instead of Tex1
+bool needReplaceTex1ByTex0();
 
 inline TextureCache & textureCache()
 {
